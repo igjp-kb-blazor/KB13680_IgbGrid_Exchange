@@ -1,0 +1,84 @@
+﻿<div style="margin: 24px auto; max-width: 600px; padding: 0 24px; display:flex; flex-direction:column; ">
+    <IgbGrid Data="_people"
+             @ref="grid"
+             PrimaryKey="@nameof(Person.Id)"
+             AutoGenerate="false"
+             CellEditDone="OnCellEditDone">
+        <IgbColumn Field="@nameof(Person.centimeter)"
+                   Header="センチメートル（ cm ）"
+                   DataType="GridColumnDataType.Number" PipeArgs="pipeArgs"
+                   Editable="true">
+        </IgbColumn>
+             <IgbColumn Field="@nameof(Person.meter)"
+                   Header="メートル（ m ）"
+                   DataType="GridColumnDataType.Number" PipeArgs="pipeArgs"
+                   Editable="true">
+        </IgbColumn>
+        <IgbColumn Field="@nameof(Person.kilometer)"
+                   Header="キロメートル（ km ）"
+                   DataType="GridColumnDataType.Number" PipeArgs="pipeArgs"
+                   Editable="true">
+        </IgbColumn>
+    </IgbGrid>
+</div>
+
+@code {
+    private IgbGrid? grid;
+
+    #pragma warning disable BL0005
+    private readonly IgbColumnPipeArgs pipeArgs = new()
+        {
+            DigitsInfo = "1.0-5"
+        };
+    #pragma warning restore BL0005
+
+    public class Person
+    {
+        public int? Id { get; set; }
+        public double centimeter { get; set; }
+        public double meter { get; set; }
+        public double kilometer { get; set; }
+    }
+
+    private List<Person> _people = new()
+    {
+        new() { Id = 1,centimeter=100,meter = 1,kilometer=0.001,},
+        new() { Id = 2,centimeter=200,meter = 2,kilometer=0.002,},
+        new() { Id = 3,centimeter=300,meter = 3,kilometer=0.003,},
+        new() { Id = 4,centimeter=400,meter = 4,kilometer=0.004,},
+        new() { Id = 5,centimeter=500,meter = 5,kilometer=0.005,}
+    };
+
+    public void OnCellEditDone(IgbGridEditDoneEventArgs args)
+    {
+        var editedField = args.Detail.Column.Field;
+        if (editedField == "centimeter" || editedField == "meter" || editedField == "kilometer")
+        {
+            int rowId = int.Parse(args.Detail.CellID.RowID);
+            var dataIndex = _people.FindIndex(data => data.Id == rowId);
+            if (dataIndex >= 0)
+            {
+                var targetData = _people[dataIndex];
+                if (editedField == "meter")
+                {
+                    targetData.centimeter = targetData.meter * 100;
+                    targetData.kilometer = targetData.meter / 1000;
+                }
+                else if (editedField == "centimeter")
+                {
+                    targetData.meter = targetData.centimeter / 100;
+                    targetData.kilometer = targetData.centimeter / 100000;
+                }
+                else if (editedField == "kilometer")
+                {
+                    targetData.centimeter = targetData.kilometer * 100000;
+                    targetData.meter = targetData.kilometer * 1000;
+                }
+
+                grid?.UpdateCell(targetData.centimeter, rowId, "centimeter");
+                grid?.UpdateCell(targetData.meter, rowId, "meter");
+                grid?.UpdateCell(targetData.kilometer, rowId, "kilometer");
+            }
+        }
+    }
+}
